@@ -13,6 +13,7 @@ Thiết kế chi tiết nằm trong `Tổng Quan Dự Án.docx` (GDD).
 | Hành động | Bàn phím | Tay cầm |
 |---|---|---|
 | Di chuyển | WASD / Mũi tên | Cần trái / D-pad |
+| Lướt né (Dash) | Space | Nút B |
 
 ## Cấu trúc thư mục
 
@@ -25,6 +26,7 @@ scripts/
   player/              Logic người chơi
   props/               Vật thể trong màn (GreyboxBlock: khối chắn tạm)
   levels/              Script phụ trợ cho màn chơi
+  ui/                  HUD (thanh Thể Lực tạm)
 ```
 
 Các thư mục tài liệu/concept art (`Playable Classes/`, `Enemy Roster/`…) có file `.gdignore` nên Godot bỏ qua, không import ảnh 8 MB vào game.
@@ -42,6 +44,7 @@ Các thư mục tài liệu/concept art (`Playable Classes/`, `Enemy Roster/`…
 
 - [x] Khung project, input map, lớp va chạm
 - [x] Bản xám: nhân vật đi 8 hướng có gia tốc/hãm, camera bám theo, khối chắn để thử va chạm và Y-sort
-- [ ] Lướt né (Dash) + Thể Lực, đánh thường 3 nhịp
+- [x] Lướt né (Dash): tốn 25 Thể Lực, bất tử 0.25 giây; Thể Lực 100, hồi 15/giây (theo GDD), có thanh Thể Lực tạm
+- [ ] Đánh thường 3 nhịp (Tam Liên Kích)
 - [ ] Quái thường với FSM 4 trạng thái
 - [ ] Hệ thống chỉ số & công thức sát thương theo GDD
