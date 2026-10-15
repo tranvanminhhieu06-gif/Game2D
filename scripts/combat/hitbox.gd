@@ -43,5 +43,9 @@ func apply_hits() -> void:
 	for area in get_overlapping_areas():
 		if not (area is Hurtbox) or _already_hit.has(area):
 			continue
+		var hurtbox := area as Hurtbox
+		# Mục tiêu đang bất tử thì chưa tính trúng: hết bất tử mà đòn còn hiệu lực vẫn trúng.
+		if hurtbox.is_invulnerable():
+			continue
 		_already_hit[area] = true
-		(area as Hurtbox).receive_hit(damage, knockback, _source)
+		hurtbox.receive_hit(damage, knockback, _source)

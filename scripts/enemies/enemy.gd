@@ -2,7 +2,7 @@ class_name Enemy
 extends CharacterBody2D
 ## Quái thường điều khiển bằng FSM 4 trạng thái (GDD mục 2.3):
 ## Tuần tra → Truy đuổi → Tấn công (có cảnh báo trước), và Khựng đòn khi trúng đòn nặng.
-## Chỉ số lấy từ EnemyStats nên một scene dùng được cho nhiều loại quái cận chiến.
+## Chỉ số lấy từ EnemyStats. Có projectile_scene thì là quái bắn xa: giữ khoảng cách và bắn đạn.
 
 signal died
 signal health_changed(current: float, maximum: float)
@@ -14,6 +14,8 @@ enum AttackPhase { TELEGRAPH, ACTIVE, RECOVERY }
 const ACCELERATION := 1200.0
 ## Lực hãm khi bị đẩy lùi hoặc đứng ra đòn (px/giây²).
 const KNOCKBACK_FRICTION := 1400.0
+## Bề ngang vạch cảnh báo hướng bắn của quái bắn xa.
+const AIM_LINE_WIDTH := 12.0
 ## Màu vùng cảnh báo khi đang gồng đòn và lúc đòn có hiệu lực.
 const TELEGRAPH_COLOR := Color(1, 0.15, 0.1, 0.15)
 const STRIKE_COLOR := Color(1, 0.3, 0.2, 0.7)
@@ -53,8 +55,16 @@ func _ready() -> void:
 	home_position = global_position
 	health = stats.max_hp
 	_body.color = stats.color
-	_hitbox.configure(stats.attack_hitbox_size, stats.attack_reach)
-	_telegraph.polygon = _hitbox.get_polygon()
+	if stats.is_ranged():
+		# Vạch ngắm dài bằng tầm bay của đạn.
+		var half := AIM_LINE_WIDTH / 2.0
+		var length := stats.projectile_range
+		_telegraph.polygon = PackedVector2Array(
+			[Vector2(0, -half), Vector2(length, -half), Vector2(length, half), Vector2(0, half)]
+		)
+	else:
+		_hitbox.configure(stats.attack_hitbox_size, stats.attack_reach)
+		_telegraph.polygon = _hitbox.get_polygon()
 	_telegraph.visible = false
 	_hurtbox.hit_received.connect(_on_hit_received)
 	_target = get_tree().get_first_node_in_group(&"player") as Node2D
@@ -130,10 +140,16 @@ func _process_chase(delta: float) -> void:
 	if distance > stats.attack_range:
 		_move_in_direction(to_target.normalized(), stats.chase_speed, delta)
 		return
-	velocity = velocity.move_toward(Vector2.ZERO, ACCELERATION * delta)
 	_face(to_target)
 	if _attack_cooldown_left <= 0.0:
+		velocity = Vector2.ZERO
 		_start_attack()
+	elif stats.is_ranged() and distance < stats.keep_away_range:
+		# Quái bắn xa lùi lại giữ khoảng cách trong lúc chờ bắn tiếp.
+		var away := -to_target.normalized() * stats.move_speed
+		velocity = velocity.move_toward(away, ACCELERATION * delta)
+	else:
+		velocity = velocity.move_toward(Vector2.ZERO, ACCELERATION * delta)
 
 
 func _move_in_direction(direction: Vector2, speed: float, delta: float) -> void:
@@ -160,7 +176,7 @@ func _start_attack() -> void:
 
 func _process_attack(delta: float) -> void:
 	velocity = velocity.move_toward(Vector2.ZERO, KNOCKBACK_FRICTION * delta)
-	if _attack_phase == AttackPhase.ACTIVE:
+	if _attack_phase == AttackPhase.ACTIVE and not stats.is_ranged():
 		_hitbox.apply_hits()
 	_state_time -= delta
 	if _attack_phase == AttackPhase.TELEGRAPH:
@@ -172,6 +188,8 @@ func _process_attack(delta: float) -> void:
 	match _attack_phase:
 		AttackPhase.TELEGRAPH:
 			velocity = _facing * stats.attack_lunge_speed
+			if stats.is_ranged():
+				_fire_projectile()
 			_enter_attack_phase(AttackPhase.ACTIVE)
 		AttackPhase.ACTIVE:
 			_enter_attack_phase(AttackPhase.RECOVERY)
@@ -193,6 +211,19 @@ func _enter_attack_phase(phase: AttackPhase) -> void:
 		AttackPhase.RECOVERY:
 			_state_time = stats.attack_recovery_time
 			_telegraph.visible = false
+
+
+func _fire_projectile() -> void:
+	var projectile := stats.projectile_scene.instantiate() as Projectile
+	projectile.direction = _facing
+	projectile.speed = stats.projectile_speed
+	projectile.max_distance = stats.projectile_range
+	projectile.damage = stats.attack_power
+	projectile.knockback = stats.attack_knockback
+	projectile.source = self
+	# Gắn vào node cha để đạn không bay theo quái.
+	get_parent().add_child(projectile)
+	projectile.global_position = _attack_pivot.global_position
 
 
 # --- Nhận đòn, khựng, chết ---

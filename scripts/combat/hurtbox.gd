@@ -5,5 +5,11 @@ extends Area2D
 signal hit_received(damage: float, knockback: Vector2, source: Node)
 
 
+## True khi chủ thể (node cha) đang bất tử, ví dụ đang lướt né: đòn đánh bỏ qua vùng này.
+func is_invulnerable() -> bool:
+	var target := get_parent()
+	return target != null and target.has_method(&"is_invincible") and target.is_invincible()
+
+
 func receive_hit(damage: float, knockback: Vector2, source: Node) -> void:
 	hit_received.emit(damage, knockback, source)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/greybox_floor.gd" id="1_floor"]
 [ext_resource type="Script" path="res://scripts/props/greybox_block.gd" id="2_block"]
@@ -10,6 +10,8 @@
 [ext_resource type="Resource" path="res://data/enemies/ho_yeu_nho.tres" id="8_ho_yeu"]
 [ext_resource type="Resource" path="res://data/enemies/son_tac.tres" id="9_son_tac"]
 [ext_resource type="Script" path="res://scripts/ui/health_bar.gd" id="10_health"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/ma_troi.tscn" id="11_ma_troi"]
+[ext_resource type="Resource" path="res://data/enemies/ma_troi.tres" id="12_ma_troi_stats"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
 bg_color = Color(0.1, 0.08, 0.06, 0.8)
@@ -128,6 +130,18 @@ position = Vector2(-420, -560)
 script = ExtResource("6_spawner")
 enemy_scene = ExtResource("7_enemy")
 stats = ExtResource("9_son_tac")
+
+[node name="MaTroi1" type="Marker2D" parent="Enemies"]
+position = Vector2(-200, 560)
+script = ExtResource("6_spawner")
+enemy_scene = ExtResource("11_ma_troi")
+stats = ExtResource("12_ma_troi_stats")
+
+[node name="MaTroi2" type="Marker2D" parent="Enemies"]
+position = Vector2(260, 600)
+script = ExtResource("6_spawner")
+enemy_scene = ExtResource("11_ma_troi")
+stats = ExtResource("12_ma_troi_stats")
 
 [node name="Player" parent="." instance=ExtResource("3_player")]
 

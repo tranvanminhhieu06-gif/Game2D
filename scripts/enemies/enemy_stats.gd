@@ -38,7 +38,20 @@ extends Resource
 @export var attack_reach := 26.0
 @export var attack_hitbox_size := Vector2(40, 32)
 
+@export_group("Bắn xa")
+## Cảnh đạn. Để trống nếu là quái cận chiến.
+@export var projectile_scene: PackedScene
+@export var projectile_speed := 240.0
+## Tầm bay tối đa của đạn (px).
+@export var projectile_range := 360.0
+## GDD: quái bắn xa giữ khoảng cách; người chơi lại gần hơn mức này thì lùi ra.
+@export var keep_away_range := 120.0
+
 @export_group("Khựng đòn (Stagger)")
 ## Đòn có lực đẩy lùi từ mức này trở lên được tính là đòn nặng, gây khựng.
 @export var stagger_knockback := 200.0
 @export var stagger_time := 0.5
+
+
+func is_ranged() -> bool:
+	return projectile_scene != null

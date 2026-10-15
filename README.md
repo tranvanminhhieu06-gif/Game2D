@@ -21,15 +21,15 @@ Thiết kế chi tiết nằm trong `Tổng Quan Dự Án.docx` (GDD).
 ```
 project.godot          Cấu hình Godot (input map, tên lớp va chạm, độ phân giải)
 data/
-  enemies/             Chỉ số từng loại quái (EnemyStats .tres): Hồ Yêu Nhỏ, Sơn Tặc
+  enemies/             Chỉ số từng loại quái (EnemyStats .tres): Hồ Yêu Nhỏ, Sơn Tặc, Ma Trơi
   skills/              Dữ liệu kỹ năng (.tres), ví dụ 3 đòn Tam Liên Kích
 scenes/
-  enemies/             Scene quái (enemy_melee.tscn dùng chung cho quái cận chiến)
+  enemies/             Scene quái: enemy_melee.tscn (cận chiến), ma_troi.tscn (bắn xa), đạn ma trơi
   levels/              Màn chơi (greybox_test.tscn = bản xám thử di chuyển & đánh)
   player/              Scene nhân vật người chơi
   props/               Vật thể (hình nộm tập võ)
 scripts/
-  combat/              AttackStep, Hitbox, Hurtbox, công thức sát thương
+  combat/              AttackStep, Hitbox, Hurtbox, Projectile, công thức sát thương
   enemies/             AI quái (FSM), EnemyStats, EnemySpawner, thanh máu trên đầu
   player/              Logic người chơi
   props/               Vật thể trong màn (GreyboxBlock, TrainingDummy)
@@ -59,5 +59,6 @@ Các thư mục tài liệu/concept art (`Playable Classes/`, `Enemy Roster/`…
 - [x] Đánh thường 3 nhịp (Tam Liên Kích): đòn 1–2 = 100% ATK, đòn 3 = 120% ATK kèm hất lùi; hình nộm tập võ hiện số sát thương theo công thức giáp K = 100
 - [x] Quái thường với FSM 4 trạng thái (Tuần tra 5 m → Truy đuổi khi vào 8 m → Tấn công sau 0.4 giây cảnh báo → Khựng khi trúng đòn nặng); Hồ Yêu Nhỏ & Sơn Tặc dùng chung scene, khác dữ liệu; chết thì sinh lại sau 5 giây
 - [x] Người chơi có Sinh Lực 200 (GDD cấp 1), né đòn bằng khung bất tử khi lướt, hết máu thì hồi sinh tại chỗ xuất phát
-- [ ] Quái bắn xa (Ma Trơi), Tinh Anh, EXP & rơi đồ
+- [x] Quái bắn xa Ma Trơi: giữ khoảng cách, vạch cảnh báo hướng bắn, đạn bay thẳng (lướt né xuyên qua được, chạm tường thì tan)
+- [ ] Quái Tinh Anh (Thủ Lĩnh Sơn Tặc), EXP & rơi đồ
 - [ ] Hệ thống chỉ số & công thức sát thương theo GDD
