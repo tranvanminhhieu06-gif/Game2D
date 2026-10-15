@@ -1,0 +1,52 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/props/training_dummy.gd" id="1_dummy"]
+[ext_resource type="Script" path="res://scripts/combat/hurtbox.gd" id="2_hurtbox"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
+radius = 10.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurt"]
+size = Vector2(32, 56)
+
+[node name="TrainingDummy" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 3
+motion_mode = 1
+script = ExtResource("1_dummy")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -8)
+shape = SubResource("CircleShape2D_feet")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Shadow" type="Polygon2D" parent="Visual"]
+color = Color(0, 0, 0, 0.35)
+polygon = PackedVector2Array(16, 0, 14.78, 2.3, 11.31, 4.24, 6.12, 5.54, 0, 6, -6.12, 5.54, -11.31, 4.24, -14.78, 2.3, -16, 0, -14.78, -2.3, -11.31, -4.24, -6.12, -5.54, 0, -6, 6.12, -5.54, 11.31, -4.24, 14.78, -2.3)
+
+[node name="Post" type="Polygon2D" parent="Visual"]
+color = Color(0.4, 0.28, 0.16, 1)
+polygon = PackedVector2Array(-3, 0, 3, 0, 3, -44, -3, -44)
+
+[node name="Arms" type="Polygon2D" parent="Visual"]
+color = Color(0.4, 0.28, 0.16, 1)
+polygon = PackedVector2Array(-22, -38, 22, -38, 22, -33, -22, -33)
+
+[node name="Body" type="Polygon2D" parent="Visual"]
+color = Color(0.82, 0.72, 0.42, 1)
+polygon = PackedVector2Array(-11, -14, 11, -14, 13, -40, -13, -40)
+
+[node name="Head" type="Polygon2D" parent="Visual"]
+color = Color(0.82, 0.72, 0.42, 1)
+polygon = PackedVector2Array(9, -52, 7.28, -46.71, 2.78, -43.44, -2.78, -43.44, -7.28, -46.71, -9, -52, -7.28, -57.29, -2.78, -60.56, 2.78, -60.56, 7.28, -57.29)
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("2_hurtbox")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -30)
+shape = SubResource("RectangleShape2D_hurt")

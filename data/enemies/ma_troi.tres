@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="EnemyStats" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_stats.gd" id="1_stats"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/will_o_wisp_bolt.tscn" id="2_bolt"]
+
+[resource]
+script = ExtResource("1_stats")
+display_name = "Ma Trơi"
+color = Color(0.35, 0.85, 0.95, 1)
+max_hp = 60.0
+defense = 0.0
+attack_power = 14.0
+move_speed = 70.0
+chase_speed = 90.0
+lose_aggro_range = 420.0
+attack_range = 230.0
+attack_active_time = 0.05
+attack_recovery_time = 0.35
+attack_cooldown = 1.6
+attack_lunge_speed = 0.0
+attack_knockback = 80.0
+projectile_scene = ExtResource("2_bolt")
+projectile_speed = 240.0
+projectile_range = 360.0
+keep_away_range = 130.0

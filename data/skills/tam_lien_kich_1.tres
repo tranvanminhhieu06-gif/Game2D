@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="AttackStep" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/attack_step.gd" id="1_step"]
+
+[resource]
+script = ExtResource("1_step")
+damage_multiplier = 1.0
+startup = 0.08
+active = 0.1
+recovery = 0.22
+lunge_speed = 120.0
+knockback = 60.0
+reach = 30.0
+hitbox_size = Vector2(44, 36)
