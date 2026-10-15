@@ -1,13 +1,18 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/combat/attack_step.gd" id="2_step"]
 [ext_resource type="Resource" path="res://data/skills/tam_lien_kich_1.tres" id="3_hit1"]
 [ext_resource type="Resource" path="res://data/skills/tam_lien_kich_2.tres" id="4_hit2"]
 [ext_resource type="Resource" path="res://data/skills/tam_lien_kich_3.tres" id="5_hit3"]
+[ext_resource type="Script" path="res://scripts/combat/hitbox.gd" id="6_hitbox"]
+[ext_resource type="Script" path="res://scripts/combat/hurtbox.gd" id="7_hurtbox"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
 radius = 10.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurt"]
+size = Vector2(24, 44)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_attack"]
 resource_local_to_scene = true
@@ -39,6 +44,16 @@ position = Vector2(0, -24)
 color = Color(0.95, 0.88, 0.65, 1)
 polygon = PackedVector2Array(6, -5, 18, 0, 6, 5)
 
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_hurtbox")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -22)
+shape = SubResource("RectangleShape2D_hurt")
+
 [node name="AttackPivot" type="Node2D" parent="."]
 position = Vector2(0, -16)
 
@@ -46,6 +61,7 @@ position = Vector2(0, -16)
 collision_layer = 8
 collision_mask = 4
 monitorable = false
+script = ExtResource("6_hitbox")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="AttackPivot/AttackHitbox"]
 position = Vector2(30, 0)

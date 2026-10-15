@@ -2,13 +2,15 @@ class_name Player
 extends CharacterBody2D
 ## Nhân vật người chơi – bản xám (greybox).
 ## Có di chuyển top-down 8 hướng, Lướt né (Dash) tốn Thể Lực
-## và đánh thường 3 nhịp (Tam Liên Kích).
+## đánh thường 3 nhịp (Tam Liên Kích) và nhận sát thương (hồi sinh tại chỗ xuất phát khi hết máu).
 ## Gốc tọa độ (origin) đặt ở chân nhân vật để Y-sort đúng.
 
 signal facing_changed(new_facing: Facing)
 signal stamina_changed(current: float, maximum: float)
 signal dashed(direction: Vector2)
 signal attack_started(combo_index: int)
+signal health_changed(current: float, maximum: float)
+signal died
 
 ## Hướng nhìn rời rạc theo chiều kim đồng hồ, bắt đầu từ hướng Đông.
 ## Sau này dùng để chọn animation 8 hướng.
@@ -33,6 +35,14 @@ enum AttackPhase { STARTUP, ACTIVE, RECOVERY }
 ## GDD: mỗi lần lướt tốn 25 Thể Lực.
 @export var dash_stamina_cost: float = 25.0
 
+@export_group("Sinh Lực & Phòng thủ")
+## HP cấp 1 theo GDD: HP(L) = 200 + 45 × (L - 1).
+@export var max_health: float = 200.0
+## GDD chưa cho DEF gốc cấp 1, tạm đặt 10.
+@export var defense: float = 10.0
+## Thời gian bất tử ngắn sau khi trúng đòn, tránh bị nhiều đòn dồn cùng lúc.
+@export var hurt_invincibility: float = 0.4
+
 @export_group("Thể Lực (Stamina)")
 ## GDD: mặc định 100 điểm.
 @export var max_stamina: float = 100.0
@@ -50,6 +60,7 @@ enum AttackPhase { STARTUP, ACTIVE, RECOVERY }
 var facing: Facing = Facing.S
 var facing_vector: Vector2 = Vector2.DOWN
 var stamina: float = 100.0
+var health: float = 200.0
 
 var _state := State.MOVE
 
@@ -64,19 +75,26 @@ var _attack_step: AttackStep
 var _attack_phase := AttackPhase.STARTUP
 var _phase_time_left := 0.0
 var _attack_queued := false
-## Các Hurtbox đã trúng trong lần vung hiện tại, để mỗi đòn chỉ trúng một lần.
-var _hit_this_swing := {}
+## Nơi hồi sinh khi hết máu (bản xám; GDD: Miếu Thổ Thần gần nhất).
+var _respawn_position := Vector2.ZERO
+var _hurt_tween: Tween
 
 @onready var _visual: Node2D = $Visual
+@onready var _body: Node2D = $Visual/Body
+@onready var _camera: Camera2D = $Camera2D
+@onready var _hurtbox: Hurtbox = $Hurtbox
 @onready var _facing_arrow: Node2D = $Visual/FacingArrow
 @onready var _attack_pivot: Node2D = $AttackPivot
-@onready var _attack_hitbox: Area2D = $AttackPivot/AttackHitbox
-@onready var _attack_shape: CollisionShape2D = $AttackPivot/AttackHitbox/CollisionShape2D
+@onready var _attack_hitbox: Hitbox = $AttackPivot/AttackHitbox
 @onready var _attack_visual: Polygon2D = $AttackPivot/AttackVisual
 
 
 func _ready() -> void:
+	add_to_group(&"player")
 	stamina = max_stamina
+	health = max_health
+	_respawn_position = global_position
+	_hurtbox.hit_received.connect(_on_hit_received)
 	_facing_arrow.rotation = facing_vector.angle()
 	_attack_visual.visible = false
 
@@ -173,22 +191,13 @@ func _start_attack(input_dir: Vector2) -> void:
 	_attack_step = combo[_combo_index]
 	_state = State.ATTACK
 	_attack_queued = false
-	_hit_this_swing.clear()
 
 	_attack_pivot.rotation = facing_vector.angle()
-	var shape := _attack_shape.shape as RectangleShape2D
-	shape.size = _attack_step.hitbox_size
-	_attack_shape.position = Vector2(_attack_step.reach, 0)
-	var half := _attack_step.hitbox_size / 2.0
-	var center := _attack_shape.position
-	_attack_visual.polygon = PackedVector2Array(
-		[
-			center + Vector2(-half.x, -half.y),
-			center + Vector2(half.x, -half.y),
-			center + Vector2(half.x, half.y),
-			center + Vector2(-half.x, half.y),
-		]
+	_attack_hitbox.configure(_attack_step.hitbox_size, _attack_step.reach)
+	_attack_hitbox.start_swing(
+		attack_power * _attack_step.damage_multiplier, facing_vector * _attack_step.knockback, self
 	)
+	_attack_visual.polygon = _attack_hitbox.get_polygon()
 
 	velocity = facing_vector * _attack_step.lunge_speed
 	_enter_phase(AttackPhase.STARTUP)
@@ -201,7 +210,7 @@ func _process_attack(delta: float, input_dir: Vector2) -> void:
 		_attack_queued = true
 
 	if _attack_phase == AttackPhase.ACTIVE:
-		_apply_hits()
+		_attack_hitbox.apply_hits()
 	elif _attack_phase == AttackPhase.RECOVERY:
 		# Lướt né hủy được phần thu đòn, chuỗi đánh quay về đòn đầu.
 		if _try_dash(input_dir):
@@ -248,14 +257,46 @@ func _end_attack(allow_follow_up: bool) -> void:
 		_combo_window_left = 0.0
 
 
-func _apply_hits() -> void:
-	for area in _attack_hitbox.get_overlapping_areas():
-		if not (area is Hurtbox) or _hit_this_swing.has(area):
-			continue
-		_hit_this_swing[area] = true
-		var damage := attack_power * _attack_step.damage_multiplier
-		var knockback := facing_vector * _attack_step.knockback
-		(area as Hurtbox).receive_hit(damage, knockback, self)
+# --- Nhận sát thương ---
+
+
+func _on_hit_received(damage: float, knockback: Vector2, _source: Node) -> void:
+	# Khung bất tử của lướt né (và sau khi trúng đòn) bỏ qua mọi đòn.
+	if is_invincible():
+		return
+	var final_damage := DamageFormula.mitigate(damage, defense)
+	_set_health(health - final_damage)
+	var offset := Vector2(randf_range(-10.0, 10.0), -60.0)
+	DamageNumber.spawn(get_parent(), global_position + offset, final_damage, Color(1, 0.4, 0.35))
+	if health <= 0.0:
+		died.emit()
+		_respawn()
+		return
+	velocity += knockback
+	_invincible_time_left = maxf(_invincible_time_left, hurt_invincibility)
+	if _hurt_tween:
+		_hurt_tween.kill()
+	_body.modulate = Color(1, 0.3, 0.3)
+	_hurt_tween = create_tween()
+	_hurt_tween.tween_property(_body, "modulate", Color.WHITE, 0.25)
+
+
+func _respawn() -> void:
+	global_position = _respawn_position
+	velocity = Vector2.ZERO
+	_state = State.MOVE
+	_attack_visual.visible = false
+	_combo_index = 0
+	_combo_window_left = 0.0
+	_set_health(max_health)
+	_set_stamina(max_stamina)
+	_invincible_time_left = 1.0
+	_camera.reset_smoothing()
+
+
+func _set_health(value: float) -> void:
+	health = clampf(value, 0.0, max_health)
+	health_changed.emit(health, max_health)
 
 
 # --- Thể Lực & hướng nhìn ---

@@ -1,13 +1,21 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/levels/greybox_floor.gd" id="1_floor"]
 [ext_resource type="Script" path="res://scripts/props/greybox_block.gd" id="2_block"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="3_player"]
 [ext_resource type="Script" path="res://scripts/ui/stamina_bar.gd" id="4_stamina"]
 [ext_resource type="PackedScene" path="res://scenes/props/training_dummy.tscn" id="5_dummy"]
+[ext_resource type="Script" path="res://scripts/enemies/enemy_spawner.gd" id="6_spawner"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/enemy_melee.tscn" id="7_enemy"]
+[ext_resource type="Resource" path="res://data/enemies/ho_yeu_nho.tres" id="8_ho_yeu"]
+[ext_resource type="Resource" path="res://data/enemies/son_tac.tres" id="9_son_tac"]
+[ext_resource type="Script" path="res://scripts/ui/health_bar.gd" id="10_health"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
 bg_color = Color(0.1, 0.08, 0.06, 0.8)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.72, 0.16, 0.12, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
 bg_color = Color(0.85, 0.65, 0.25, 1)
@@ -94,6 +102,33 @@ position = Vector2(-160, 60)
 position = Vector2(0, -170)
 defense = 100.0
 
+[node name="Enemies" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="HoYeu1" type="Marker2D" parent="Enemies"]
+position = Vector2(620, -360)
+script = ExtResource("6_spawner")
+enemy_scene = ExtResource("7_enemy")
+stats = ExtResource("8_ho_yeu")
+
+[node name="HoYeu2" type="Marker2D" parent="Enemies"]
+position = Vector2(820, -120)
+script = ExtResource("6_spawner")
+enemy_scene = ExtResource("7_enemy")
+stats = ExtResource("8_ho_yeu")
+
+[node name="SonTac1" type="Marker2D" parent="Enemies"]
+position = Vector2(-640, -380)
+script = ExtResource("6_spawner")
+enemy_scene = ExtResource("7_enemy")
+stats = ExtResource("9_son_tac")
+
+[node name="SonTac2" type="Marker2D" parent="Enemies"]
+position = Vector2(-420, -560)
+script = ExtResource("6_spawner")
+enemy_scene = ExtResource("7_enemy")
+stats = ExtResource("9_son_tac")
+
 [node name="Player" parent="." instance=ExtResource("3_player")]
 
 [node name="HUD" type="CanvasLayer" parent="."]
@@ -105,11 +140,24 @@ offset_right = 900.0
 offset_bottom = 38.0
 text = "Bản xám – Di chuyển: WASD / Mũi tên / Cần trái · Lướt né: Space / B · Đánh: J / Chuột trái / X"
 
-[node name="StaminaBar" type="ProgressBar" parent="HUD" node_paths=PackedStringArray("player")]
+[node name="HealthBar" type="ProgressBar" parent="HUD" node_paths=PackedStringArray("player")]
 offset_left = 16.0
 offset_top = 44.0
+offset_right = 256.0
+offset_bottom = 58.0
+theme_override_styles/background = SubResource("StyleBoxFlat_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+max_value = 200.0
+value = 200.0
+show_percentage = false
+script = ExtResource("10_health")
+player = NodePath("../../Player")
+
+[node name="StaminaBar" type="ProgressBar" parent="HUD" node_paths=PackedStringArray("player")]
+offset_left = 16.0
+offset_top = 62.0
 offset_right = 216.0
-offset_bottom = 56.0
+offset_bottom = 72.0
 theme_override_styles/background = SubResource("StyleBoxFlat_bg")
 theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
 value = 100.0
